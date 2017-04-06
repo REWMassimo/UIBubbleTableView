@@ -11,6 +11,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import "UIBubbleTableViewCell.h"
 #import "NSBubbleData.h"
+#import "REWAppDelegate.h"
 
 @interface UIBubbleTableViewCell ()
 
@@ -36,16 +37,6 @@
 	[self setupInternalData];
 }
 
-#if !__has_feature(objc_arc)
-- (void) dealloc
-{
-    self.data = nil;
-    self.customView = nil;
-    self.bubbleImage = nil;
-    self.avatarImage = nil;
-    [super dealloc];
-}
-#endif
 
 - (void)setDataInternal:(NSBubbleData *)value
 {
@@ -53,17 +44,35 @@
 	[self setupInternalData];
 }
 
+
+- (void) layoutSubviews {
+    
+    NSBubbleType type = self.data.type;
+    
+    CGFloat width = self.data.view.frame.size.width;
+    CGFloat height = self.data.view.frame.size.height;
+    
+    CGFloat x = (type == BubbleTypeSomeoneElse) ? 0 : self.frame.size.width - width - self.data.insets.left - self.data.insets.right;
+    CGFloat y = 0;
+    
+    self.bubbleImage.frame = CGRectMake(x, y, width + self.data.insets.left + self.data.insets.right, height + self.data.insets.top + self.data.insets.bottom);
+    
+    [super layoutSubviews];
+    
+}
+
+
 - (void) setupInternalData
 {
+    
+    REWVisualStyle *style = [REWAppDelegate instance].visualStyle;
     self.selectionStyle = UITableViewCellSelectionStyleNone;
+    self.backgroundColor = style.messagesBackgroundColor;
     
     if (!self.bubbleImage)
     {
-#if !__has_feature(objc_arc)
-        self.bubbleImage = [[[UIImageView alloc] init] autorelease];
-#else
-        self.bubbleImage = [[UIImageView alloc] init];        
-#endif
+
+        self.bubbleImage = [[UIImageView alloc] init];
         [self addSubview:self.bubbleImage];
     }
     
@@ -79,11 +88,9 @@
     if (self.showAvatar)
     {
         [self.avatarImage removeFromSuperview];
-#if !__has_feature(objc_arc)
-        self.avatarImage = [[[UIImageView alloc] initWithImage:(self.data.avatar ? self.data.avatar : [UIImage imageNamed:@"missingAvatar.png"])] autorelease];
-#else
+
         self.avatarImage = [[UIImageView alloc] initWithImage:(self.data.avatar ? self.data.avatar : [UIImage imageNamed:@"missingAvatar.png"])];
-#endif
+        
         self.avatarImage.layer.cornerRadius = 9.0;
         self.avatarImage.layer.masksToBounds = YES;
         self.avatarImage.layer.borderColor = [UIColor colorWithWhite:0.0 alpha:0.2].CGColor;
@@ -109,14 +116,22 @@
 
     if (type == BubbleTypeSomeoneElse)
     {
-        self.bubbleImage.image = [[UIImage imageNamed:@"bubbleSomeone.png"] stretchableImageWithLeftCapWidth:21 topCapHeight:14];
+        UIImage *imageSomeone = [[UIImage imageNamed:@"bubbleSomeone.png"] stretchableImageWithLeftCapWidth:21 topCapHeight:14];
+        imageSomeone = [imageSomeone imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        
+        self.bubbleImage.tintColor = style.messagesBubbleTheirsBackgroundColor;
+        self.bubbleImage.image = imageSomeone;
 
     }
     else {
-        self.bubbleImage.image = [[UIImage imageNamed:@"bubbleMine.png"] stretchableImageWithLeftCapWidth:15 topCapHeight:14];
+        UIImage *imageMine = [[UIImage imageNamed:@"bubbleMine.png"] stretchableImageWithLeftCapWidth:15 topCapHeight:14];
+        imageMine = [imageMine imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        
+        self.bubbleImage.tintColor = style.messagesBubbleMineBackgroundColor;
+        self.bubbleImage.image = imageMine;
     }
 
-    self.bubbleImage.frame = CGRectMake(x, y, width + self.data.insets.left + self.data.insets.right, height + self.data.insets.top + self.data.insets.bottom);
+    // self.bubbleImage.frame = CGRectMake(x, y, width + self.data.insets.left + self.data.insets.right, height + self.data.insets.top + self.data.insets.bottom);
 }
 
 @end
