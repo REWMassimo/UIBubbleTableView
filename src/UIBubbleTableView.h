@@ -13,6 +13,8 @@
 #import "UIBubbleTableViewDataSource.h"
 #import "UIBubbleTableViewCell.h"
 
+#import "REWConversationBubbleImageView.h"
+
 typedef enum _NSBubbleTypingType
 {
     NSBubbleTypingTypeNobody = 0,
@@ -20,12 +22,20 @@ typedef enum _NSBubbleTypingType
     NSBubbleTypingTypeSomebody = 2
 } NSBubbleTypingType;
 
-@interface UIBubbleTableView : UITableView <UITableViewDelegate, UITableViewDataSource>
+@interface UIBubbleTableView : UITableView <UITableViewDelegate, UITableViewDataSource, NSBubbleDataDelegate>
+
+- (void)insertBubble:(NSBubbleData *)bubble withRowAnimation:(UITableViewRowAnimation)animation;
+
+- (NSIndexPath *)lastIndexPath;
+
+- (void)rebuildSections;
 
 @property (nonatomic, assign) IBOutlet id<UIBubbleTableViewDataSource> bubbleDataSource;
 @property (nonatomic) NSTimeInterval snapInterval;
 @property (nonatomic) NSBubbleTypingType typingBubble;
 @property (nonatomic) BOOL showAvatars;
+
+@property (nonatomic, retain) NSMutableArray *bubbleSection;
 
 - (void) scrollBubbleViewToBottomAnimated:(BOOL)animated;
 

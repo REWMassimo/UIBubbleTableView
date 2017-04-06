@@ -7,10 +7,12 @@
 //
 
 #import "UIBubbleHeaderTableViewCell.h"
+#import "REWAppDelegate.h"
+
 
 @interface UIBubbleHeaderTableViewCell ()
 
-@property (nonatomic, retain) UILabel *label;
+@property (nonatomic) UILabel *label;
 
 @end
 
@@ -40,15 +42,20 @@
         return;
     }
     
+    REWVisualStyle *style = [REWAppDelegate instance].visualStyle;
+    
     self.selectionStyle = UITableViewCellSelectionStyleNone;
+    
+    self.backgroundColor = style.messagesBackgroundColor;
+    
     self.label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, [UIBubbleHeaderTableViewCell height])];
     self.label.text = text;
-    self.label.font = [UIFont boldSystemFontOfSize:12];
+    self.label.font = [UIFont [UIFont fontWithName:@"HelveticaNeue" size:12.0];
     self.label.textAlignment = NSTextAlignmentCenter;
-    self.label.shadowOffset = CGSizeMake(0, 1);
-    self.label.shadowColor = [UIColor whiteColor];
-    self.label.textColor = [UIColor darkGrayColor];
-    self.label.backgroundColor = [UIColor clearColor];
+                       
+    self.label.textColor = style.messagesTimestampColor;
+    self.label.backgroundColor = self.backgroundColor;
+
     [self addSubview:self.label];
 }
 

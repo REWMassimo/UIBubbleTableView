@@ -9,6 +9,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "REWConversationBubbleImageView.h"
 
 typedef enum _NSBubbleType
 {
@@ -16,7 +17,16 @@ typedef enum _NSBubbleType
     BubbleTypeSomeoneElse = 1
 } NSBubbleType;
 
-@interface NSBubbleData : NSObject
+@class NSBubbleData;
+
+@protocol NSBubbleDataDelegate <NSObject>
+
+@optional
+- (void)bubbleDataViewDidChange:(NSBubbleData *)bubbleData view:(UIView *)view;
+
+@end
+
+@interface NSBubbleData : NSObject <REWConversationBubbleImageDelegate>
 
 @property (readonly, nonatomic, strong) NSDate *date;
 @property (readonly, nonatomic) NSBubbleType type;
@@ -24,10 +34,21 @@ typedef enum _NSBubbleType
 @property (readonly, nonatomic) UIEdgeInsets insets;
 @property (nonatomic, strong) UIImage *avatar;
 
+@property (nonatomic, weak) id <NSBubbleDataDelegate> delegate;
+
 - (id)initWithText:(NSString *)text date:(NSDate *)date type:(NSBubbleType)type;
+
+- (id)initWithText:(NSString *)text date:(NSDate *)date type:(NSBubbleType)type font:(UIFont *)font;
+
+
 + (id)dataWithText:(NSString *)text date:(NSDate *)date type:(NSBubbleType)type;
+
++ (id)dataWithText:(NSString *)text date:(NSDate *)date type:(NSBubbleType)type font:(UIFont *)font;
+
+
 - (id)initWithImage:(UIImage *)image date:(NSDate *)date type:(NSBubbleType)type;
 + (id)dataWithImage:(UIImage *)image date:(NSDate *)date type:(NSBubbleType)type;
+
 - (id)initWithView:(UIView *)view date:(NSDate *)date type:(NSBubbleType)type insets:(UIEdgeInsets)insets;
 + (id)dataWithView:(UIView *)view date:(NSDate *)date type:(NSBubbleType)type insets:(UIEdgeInsets)insets;
 

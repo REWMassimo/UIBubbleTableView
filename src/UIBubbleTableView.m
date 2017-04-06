@@ -8,16 +8,18 @@
 //  To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/
 //
 
+// Changes from Andy Madan re-introduced for this Cocoapod by Massimo Savino
+
 #import "UIBubbleTableView.h"
 #import "NSBubbleData.h"
 #import "UIBubbleHeaderTableViewCell.h"
 #import "UIBubbleTypingTableViewCell.h"
 
+
 @interface UIBubbleTableView ()
 
-@property (nonatomic, retain) NSMutableArray *bubbleSection;
-
 @end
+
 
 @implementation UIBubbleTableView
 
@@ -86,29 +88,26 @@
 
 #pragma mark - Override
 
-- (void)reloadData
-{
-    self.showsVerticalScrollIndicator = NO;
-    self.showsHorizontalScrollIndicator = NO;
+- (void)reloadData {
     
-    // Cleaning up
+    [self rebuildSections];
+    [super reloadData];
+    
+}
+
+- (void) rebuildSections {
+    
+    // Cleaning up - will reintroduce autorelease if required.
 	self.bubbleSection = nil;
     
     // Loading new data
-    int count = 0;
-#if !__has_feature(objc_arc)
-    self.bubbleSection = [[[NSMutableArray alloc] init] autorelease];
-#else
+    NSInteger count = 0;
+    
     self.bubbleSection = [[NSMutableArray alloc] init];
-#endif
     
     if (self.bubbleDataSource && (count = [self.bubbleDataSource rowsForBubbleTable:self]) > 0)
     {
-#if !__has_feature(objc_arc)
-        NSMutableArray *bubbleData = [[[NSMutableArray alloc] initWithCapacity:count] autorelease];
-#else
         NSMutableArray *bubbleData = [[NSMutableArray alloc] initWithCapacity:count];
-#endif
         
         for (int i = 0; i < count; i++)
         {
@@ -134,21 +133,59 @@
             
             if ([data.date timeIntervalSinceDate:last] > self.snapInterval)
             {
-#if !__has_feature(objc_arc)
-                currentSection = [[[NSMutableArray alloc] init] autorelease];
-#else
                 currentSection = [[NSMutableArray alloc] init];
-#endif
                 [self.bubbleSection addObject:currentSection];
             }
+            
+            data.delegate = self;
             
             [currentSection addObject:data];
             last = data.date;
         }
     }
-    
-    [super reloadData];
 }
+
+
+- (void) insertBubble:(NSBubbleData *)bubble withRowAnimation:(UITableViewRowAnimation)animation {
+    
+    [self beginUpdates];
+    
+    // Get last section
+    NSInteger lastSection = self.bubbleSection.count - 1;
+    
+    NSArray *sectionBubbles = lastSection >= 0 ? [self.bubbleSection objectAtIndex:lastSection] : [NSArray array];
+    
+    NSMutableArray *mutableBubbles = [sectionBubbles mutableCopy];
+    
+    [mutableBubbles addObject:bubble];
+    
+    if (lastSection >= 0) {
+        
+        [self.bubbleSection replaceObjectAtIndex:lastSection withObject:mutableBubbles];
+        
+        [self insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:mutableBubbles.count inSection:lastSection]] withRowAnimation:animation];
+    
+    } else {
+    
+        [self.bubbleSection addObject:mutableBubbles];
+        [self insertSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:animation];
+        
+    }
+    
+    [self endUpdates];
+}
+
+
+- (NSIndexPath *)lastIndexPath {
+
+    NSInteger lastSection = self.bubbleSection.count - 1;
+    
+    NSArray *sectionBubbles = [self.bubbleSection objectAtIndex:lastSection];
+    
+    return [NSIndexPath indexPathForRow:sectionBubbles.count - 2 inSection:lastSection];
+}
+
+
 
 #pragma mark - UITableViewDelegate implementation
 
@@ -169,7 +206,7 @@
     return [[self.bubbleSection objectAtIndex:section] count] + 1;
 }
 
-- (float)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     // Now typing
 	if (indexPath.section >= [self.bubbleSection count])
@@ -184,7 +221,11 @@
     }
     
     NSBubbleData *data = [[self.bubbleSection objectAtIndex:indexPath.section] objectAtIndex:indexPath.row - 1];
-    return MAX(data.insets.top + data.view.frame.size.height + data.insets.bottom, self.showAvatars ? 52 : 0);
+    
+    CGFloat height = MAX(data.insets.top + data.view.frame.size.height + data.insets.bottom, self.showAvatars ? 52 : 0);
+    
+    return height;
+    
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -229,6 +270,27 @@
     
     return cell;
 }
+
+- (void)bubbleDataViewDidChange:(NSBubbleData *)bubbleData view:(UIView *)view {
+    
+    if ([view isKindOfClass:[REWConversationBubbleImageView class]]) {
+        
+        [self beginUpdates];
+        [self endUpdates];
+        
+        [UIView animateWithDuration:0.25 delay:0.1 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            
+            [self scrollRectToVisible:CGRectMake(0, 0, 1, self.contentSize.height) animated:YES];
+            
+        } completion:nil];
+        
+    }
+}
+
+
+
+
+
 
 #pragma mark - Public interface
 
