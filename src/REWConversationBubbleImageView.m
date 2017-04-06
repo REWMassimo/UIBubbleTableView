@@ -8,6 +8,7 @@
 //
 
 #import "REWConversationBubbleImageView.h"
+#import "REWImageLoader.h"
 
 
 @interface REWConversationBubbleImageView ()

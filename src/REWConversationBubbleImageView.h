@@ -7,9 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "REWImageLoader.h"
 
-
+@class REWImageLoader;
 @class REWConversationBubbleImageView;
 
 
